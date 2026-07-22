@@ -1,14 +1,21 @@
 # database_bot.py
 import os
 import json
-import asyncio
+import sys
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
+
+# ==================== TRY-EXCEPT FOR TELEGRAM IMPORT ====================
+try:
+    from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+    from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
+except ImportError as e:
+    print(f"❌ Import Error: {e}")
+    print("📦 Please install required packages: pip install -r requirements.txt")
+    sys.exit(1)
 
 # ==================== CONFIG ====================
 DB_BOT_TOKEN = os.environ.get("DB_BOT_TOKEN", "8748919559:AAEHUeR390Y8RuBMqFpx4BVkKy2pGQvPHCw")
-ADMIN_IDS = [2102179662]  # যারা ডেটাবেস বট ব্যবহার করতে পারবেন
+ADMIN_IDS = [2102179662]
 
 # ==================== DATA FILES ====================
 DATA_FILES = [
@@ -119,7 +126,6 @@ async def get_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     data = load_data(file_name)
     
-    # বড় ফাইল ডকুমেন্ট হিসেবে পাঠান
     import sys
     size = sys.getsizeof(json.dumps(data))
     if size > 4000:
@@ -235,23 +241,28 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ==================== MAIN ====================
 
 def main():
-    app = ApplicationBuilder().token(DB_BOT_TOKEN).build()
-    
-    # Command Handlers
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("list", list_files))
-    app.add_handler(CommandHandler("get", get_file))
-    app.add_handler(CommandHandler("set", set_file))
-    app.add_handler(CommandHandler("backup", backup_all))
-    
-    # Callback Handler
-    app.add_handler(CallbackQueryHandler(button_callback))
-    
-    print("💾 Database Storage Bot is running...")
-    print(f"📂 Data directory: {DATA_DIR}")
-    print(f"📄 Total files: {len(DATA_FILES)}")
-    
-    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+    try:
+        app = ApplicationBuilder().token(DB_BOT_TOKEN).build()
+        
+        # Command Handlers
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(CommandHandler("list", list_files))
+        app.add_handler(CommandHandler("get", get_file))
+        app.add_handler(CommandHandler("set", set_file))
+        app.add_handler(CommandHandler("backup", backup_all))
+        
+        # Callback Handler
+        app.add_handler(CallbackQueryHandler(button_callback))
+        
+        print("💾 Database Storage Bot is running...")
+        print(f"📂 Data directory: {DATA_DIR}")
+        print(f"📄 Total files: {len(DATA_FILES)}")
+        
+        app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        print("📦 Please check: pip install -r requirements.txt")
 
 if __name__ == "__main__":
     main()
